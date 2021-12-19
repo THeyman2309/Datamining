@@ -1,0 +1,39 @@
+---
+title: "Untitled"
+author: "ukke"
+date: "5 december 2021"
+output: html_document
+---
+
+```{r}
+library(affy)
+library(arrayQualityMetrics)
+library(ArrayExpress)
+library(limma)
+library(siggenes)
+library("mogene10sttranscriptcluster.db")
+library("ArrayExpress")
+library("arrayQualityMetrics")
+library("ggplot2")
+#library("huex10sttranscriptcluster.db")
+
+library("oligo")
+
+#library("pd.huex.1.0.st.v2")
+
+library("wateRmelon")
+```
+
+
+
+Read in the microarray data and display the head and dimensions of the intensity value matrix.
+```{r, message=F}
+id_1 <- "E-MTAB-11134"
+exonCELs <- list.celfiles(".")
+data.raw_1 <- read.celfiles(exonCELs)
+
+data <- data.raw_1@assayData$exprs
+write.csv(data, "E-MTAB-11134.csv")
+
+
+```
