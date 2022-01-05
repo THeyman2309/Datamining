@@ -1,0 +1,153 @@
+---
+title: "plots_datamining"
+author: "ukke"
+date: "24 december 2021"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+## Data exploration clustering data
+
+```{r}
+library(ggplot2)
+data <- read.csv("cluster_results.csv")
+data$DR.technique <- ordered(data$DR.technique, levels = c("pca", "tsne", "umap", "random"))
+ggplot(data) +
+  geom_boxplot(aes(x = metric, y = value, fill = DR.technique))+
+  theme_bw()+
+  scale_fill_manual(values=c("firebrick", "gold", "springgreen4", "grey44"))+
+  labs(fill = "DR technique")+
+  xlab("Clustering metric")+
+  ylab("Score")+
+  theme(axis.title.x = element_text(size = 12, face = "bold.italic"))+
+  theme(axis.title.y = element_text(size = 12, face = "bold"))+
+  theme(legend.title = element_text(size = 12, face = "bold.italic"))+
+  theme(axis.text = element_text(size = 11))
+ggsave("clustering_metrics.png", dpi = 750)
+```
+
+## Statistical testing clustering data
+
+```{r}
+acc_data <- data[data$metric == "accuracy",]
+cor_data <- data[data$metric == "correlation",]
+kruskal.test(value ~ DR.technique, data = acc_data)
+kruskal.test(value ~ DR.technique, data = cor_data)
+```
+p-value < 0.05 => significant difference between clustering techniques in both correlation and accuracy.
+
+```{r}
+pairwise.wilcox.test(acc_data$value, acc_data$DR.technique,
+                 p.adjust.method = "BH")
+```
+ only tsne's mean accuracy differs significantly from the accuracy of clustering on random data
+
+```{r}
+pairwise.wilcox.test(cor_data$value, cor_data$DR.technique,
+                 p.adjust.method = "BH")
+```
+
+
+
+
+normalized stress
+```{r}
+dat_normstress <- data.frame(c(0.8399765761963699, 0.8993401734587501, 0.9999928274887576, 0.2473133762120208, 0.5496279363331533, 0.999749667036924, 0.25554342278826564, 0.32633080534774184, 0.2680290318207868))
+colnames(dat_normstress) <- c("norm_stress")
+dat_normstress$dr_technique <- c(replicate(3, "umap"), replicate(3, "t-SNE"), replicate(3, "PCA"))
+dat_normstress$dataset <- c(replicate(3,c("1", "2", "3")))
+dat_normstress
+
+ggplot(dat_normstress)+
+  geom_point(aes(x = dr_technique, y = norm_stress, color = dataset), size = 4)+
+  theme_bw()+
+  scale_color_manual(values = c("firebrick", "gold", "springgreen4"))+
+  ylab("Normalized stress")+
+  xlab("DR technique")+
+  labs(color = "Dataset")+
+  theme(axis.title.x = element_text(size = 12, face = "bold.italic"))+
+  theme(axis.title.y = element_text(size = 12, face = "bold"))+
+  theme(legend.title = element_text(size = 12, face = "bold.italic"))+
+  theme(axis.text = element_text(size = 11))
+ggsave("normalized_stress.png", dpi = 750, width = 6, height = 4)
+```
+
+
+
+```{r}
+# umap
+reductions <- read.csv("reductions.csv")
+reductions
+
+```
+
+```{r}
+library(ggplot2)
+plot <- function(dimension1, dimension2){
+  dim1 <- which(colnames(reductions) == dimension1)
+  dim2 <- which(colnames(reductions) == dimension2)
+  ggplot(reductions)+
+  geom_point(aes(x = reductions[,dim1], y = reductions[,dim2], color = label), size = 3)+
+  scale_color_manual(labels = c("IBC", "non-IBC"), values = c("midnightblue", "gold"))+
+  xlab(dimension1)+
+  ylab(dimension2)+
+  theme_bw()+
+  theme(legend.position='none')
+}
+plot("umap1", "umap2")
+umap12 <- plot("umap1", "umap2")
+umap13 <- plot("umap1", "umap3")
+umap23 <- plot("umap2", "umap3")
+umap <- cowplot::plot_grid(umap12, umap13, umap23, labels = c("A", "B", "C"), nrow = 1)
+
+tsne12 <- plot("tsne1", "tsne2")
+tsne13 <- plot("tsne1", "tsne3")
+tsne23 <- plot("tsne2", "tsne3")
+tsne <- cowplot::plot_grid(tsne12, tsne13, tsne23, labels = c("D", "E", "F"), nrow = 1)
+
+pca12 <- plot("pca1", "pca2")
+pca13 <- plot("pca1", "pca3")
+pca23 <- plot("pca2", "pca3")
+pca <- cowplot::plot_grid(pca12, pca13, pca23, labels = c("G", "H", "I"), nrow = 1)
+
+cowplot::plot_grid(umap, tsne, pca, nrow = 3)
+
+ggsave("reductions.png", dpi = 750, height = 12, width= 15)
+```
+
+
+```{r}
+library(ggplot2)
+# umap
+times <- read.csv("times.csv")
+times$dataset <- as.character(times$dataset)
+
+ggplot(times)+
+  geom_boxplot(aes(x = dataset, y = value, fill = DR.technique))+
+  theme_bw()+
+  scale_fill_manual(values= c("gold", "midnightblue", "springgreen4"))+
+  xlab("Dataset")+
+  ylab("Expired time (s)")+
+  labs(fill= "DR technique")+
+  theme(axis.title.x = element_text(size = 12, face = "bold.italic"))+
+  theme(axis.title.y = element_text(size = 12, face = "bold"))+
+  theme(legend.title = element_text(size = 12, face = "bold.italic"))+
+  theme(axis.text = element_text(size = 11))
+
+ggsave("times.png", dpi = 750, height = 5, width = 8)
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
